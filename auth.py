@@ -8,14 +8,15 @@ from models import Users, SessionLocal
 import bcrypt
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from jose import jwt, JWTError
+from config import settings
 
 router = APIRouter(
     prefix="/auth",
     tags=['auth']
 )
 
-SECRET_KEY = "197b2C37C391b93fe80344Fe73b806947a65e36206e05a1a23c2fa12702Fe3"
-ALGORITHM = 'HS256'
+SECRET_KEY = settings.SECRET_KEY
+ALGORITHM = settings.ALGORITHM
 
 oauth2_bearer = OAuth2PasswordBearer(tokenUrl="auth/token")
 
@@ -64,14 +65,14 @@ async def login_from_access_token(from_data: Annotated[OAuth2PasswordRequestForm
     if not user:
         return HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Could not validate user.')
 
-    token = create_access_token(user.username, user.id, timedelta(minutes=20))
+    token = create_access_token(user.username, user.id, timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES))
 
     return {'access_token': token, 'token_type': 'bearer'}
 
 
 def create_access_token(username: str, user_id: int, expires_delta: timedelta):
     encode = {"sub": username, "id": user_id}
-    expires = datetime.utcnow() + expires_delta
+    expires = datetime.now() + expires_delta
     encode.update({'exp': expires})
     return jwt.encode(encode, SECRET_KEY, algorithm=ALGORITHM)
 
